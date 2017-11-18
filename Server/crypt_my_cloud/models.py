@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+from django.contrib.auth.models import User
+
 
 class AutoReportModel(models.Model):
     created_at = models.DateTimeField(editable=False)
@@ -20,9 +22,21 @@ class AutoReportModel(models.Model):
         abstract = True
 
 
+class Key(AutoReportModel):
+    key = models.CharField(unique=True, max_length=512)
+
+    def __repr__(self):
+        return self.key
+
+    def __str__(self):
+        return repr(self)
+
+
 class File(AutoReportModel):
     file_name = models.CharField(unique=True, max_length=50)
-    key = models.CharField(unique=True, max_length=512)
+
+    key = models.ForeignKey(Key, null=True)
+    # owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __repr__(self):
         return self.file_name

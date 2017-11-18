@@ -1,12 +1,20 @@
-from rest_framework.generics import CreateAPIView, RetrieveAPIView, get_object_or_404
+from rest_framework.generics import (
+    CreateAPIView,
+    ListAPIView,
+    RetrieveDestroyAPIView,
+    get_object_or_404
+)
+from rest_framework.permissions import IsAuthenticated
 
-from crypt_my_cloud.models import File
-from crypt_my_cloud.serializers import FileSerializer
+from crypt_my_cloud.models import Key, File
+from crypt_my_cloud.serializers import FileSerializer, FileLimitedSerializer
 
 
-class FileView(CreateAPIView, RetrieveAPIView):
+class FileView(CreateAPIView, RetrieveDestroyAPIView):
+
     serializer_class = FileSerializer
-    queryset =  File.objects.all()
+    permission_classes = (IsAuthenticated,)
+    queryset =  File.objects.select_related('key').all()
 
     def get_object(self):
         obj = get_object_or_404(
@@ -18,4 +26,9 @@ class FileView(CreateAPIView, RetrieveAPIView):
 
     def perform_create(self, serializer):
         # TODO: generate real key here
-        serializer.save(key='test_key')
+        serializer.save(key=Key.objects.create(key='test_key'))
+
+class FilesView(ListAPIView):
+    serializer_class = FileLimitedSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = File.objects.all().order_by('file_name')
