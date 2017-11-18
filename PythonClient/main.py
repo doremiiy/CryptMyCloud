@@ -14,17 +14,31 @@ class FileInterface(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 
-        tk.Listbox(self).grid(rowspan=3, column=0)
+        self.file_list = tk.Listbox(self)
+        self.file_list.grid(rowspan=3, column=0)
         tk.Button(self, text='Upload new file', command=self.upload_file).grid(row=0, column=1)
-        tk.Button(self, text='Delete', command=self.upload_file).grid(row=1, column=1)
+        tk.Button(self, text='Delete', command=self.delete_file).grid(row=1, column=1)
         tk.Button(self, text='Download & Decrypt', command=self.upload_file).grid(row=2, column=1)
         self.error_message = tk.Label(self, text='', fg='red')
         self.error_message.grid(row=2, column=0)
-
-
+        self.refresh_list()
 
     def refresh_list(self):
-        pass
+        try:
+            result = requests.get(
+                'http://%s:%s/file/list/' % (SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
+                headers={'Authorization': 'JWT % s' % self.parent.jwt_token}
+            )
+        except requests.exceptions.RequestException:
+            self.error_message.config(text='No internet connection!')
+            return
+        if result.status_code == requests.codes.ok:
+            self.file_list.delete(0, self.file_list.size()-1)
+            self.error_message.config(text='')
+            for file_obj in result.json():
+                self.file_list.insert(tk.END, file_obj['file_name'])
+        else:
+            self.error_message.config(text='Http error : %d' % result.status_code)
 
     def upload_file(self):
         path = askopenfilename()
@@ -41,14 +55,29 @@ class FileInterface(tk.Frame):
             self.error_message.config(text='No internet connection!')
             return
 
-        if result.status_code == requests.codes.ok:
+        if result.status_code == requests.codes.created:
             self.error_message.config(text='')
-            print(result.json())
             # TODO: Encrypt the file and upload it to google drive
-            # TODO: Refresh the view file list
+            self.refresh_list()
         else:
             self.error_message.config(text='Http error : %d' % result.status_code)
 
+    def delete_file(self):
+        try:
+            indexes = self.file_list.curselection()
+            for index in indexes:
+                try:
+                    requests.delete(
+                        'http://%s:%s/file/' % (SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
+                        params={'file_name': self.file_list.get(index)},
+                        headers={'Authorization': 'JWT %s' % self.parent.jwt_token}
+                    )
+                except requests.exceptions.RequestException:
+                    pass
+                self.file_list.delete(index)
+        except IndexError:
+            pass
+        self.refresh_list()
 
 class LoginInterface(tk.Frame):
 
@@ -145,12 +174,32 @@ if __name__ == "__main__":
 
     root.mainloop()
 
+'''
+#creation of a file
+result = requests.post('http://localhost:8000/file/', data={'file_name': 'test.txt'})
 
-# creation of a file
-# result = requests.post('http://localhost:8000/file/', data={'file_name': 'test.txt'})
+# Delete
+requests.delete(
+    'http://localhost:8000/file/',
+    params={'file_name': 'test.txt'}, headers={'Authorization': 'JWT %s' % var }
+)
 
 # retrieve key
-# result = requests.get('http://localhost:8000/file/', params={'file_name': 'test.txt'}, headers={'Authorization': 'JWT })
+result = requests.get(
+    'http://localhost:8000/file/',
+    params={'file_name': 'test.txt'},
+    headers={'Authorization': 'JWT %s' % var }
+)
+
+# List of files
+requests.get('http://localhost:8000/file/list/', headers={'Authorization': 'JWT %s' % var})
 
 # Get auth token
-# requests.post('http://localhost:8000/api-token-auth/', json={'username': 'remid', 'password': 'password'})
+# requests.post(
+    'http://localhost:8000/api-token-auth/',
+    json={'username': 'remid', 'password': 'password'}
+)
+
+# Refresh auth token
+requests.post('http:/localhost:8000/api-token-refresh/', json={'token': var})
+'''
