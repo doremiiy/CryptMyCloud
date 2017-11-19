@@ -1,3 +1,6 @@
+import codecs
+import os
+
 from rest_framework.generics import (
     CreateAPIView,
     ListAPIView,
@@ -25,10 +28,12 @@ class FileView(CreateAPIView, RetrieveDestroyAPIView):
         return obj
 
     def perform_create(self, serializer):
-        # TODO: generate real key here
-        serializer.save(key=Key.objects.create(key='test_key'))
+        serializer.save(key=Key.objects.create(
+            key=codecs.encode(os.urandom(32), 'hex_codec').decode('ascii')
+        ))
 
 class FilesView(ListAPIView):
+
     serializer_class = FileLimitedSerializer
     permission_classes = (IsAuthenticated,)
     queryset = File.objects.all().order_by('file_name')
