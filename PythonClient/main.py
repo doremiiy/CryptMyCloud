@@ -5,6 +5,8 @@ from tkinter.filedialog import askopenfilename
 
 import requests
 
+import file_manager
+
 
 SETTINGS = {}
 
@@ -41,10 +43,10 @@ class FileInterface(tk.Frame):
             self.error_message.config(text='Http error : %d' % result.status_code)
 
     def upload_file(self):
-        path = askopenfilename()
-        if not path:
+        file_obj = askopenfilename()
+        if not file_obj:
             return
-        file_name = os.path.basename(path)
+        file_name = os.path.basename(file_obj)
         try:
             result = requests.post(
                 'http://%s:%s/file/' % (SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
@@ -57,7 +59,14 @@ class FileInterface(tk.Frame):
 
         if result.status_code == requests.codes.created:
             self.error_message.config(text='')
-            # TODO: Encrypt the file and upload it to google drive
+            os.makedirs('temp')
+            file_manager.encrypt(
+                file_obj,
+                'temp/%s' % file_name,
+                bytes.fromhex(result.json()['key'])
+            )
+            # TODO: Upload TempFile to google drive
+            # os.system('rm -rf temp')
             self.refresh_list()
         else:
             self.error_message.config(text='Http error : %d' % result.status_code)
@@ -173,33 +182,3 @@ if __name__ == "__main__":
     root.grid_columnconfigure(2, weight=1)
 
     root.mainloop()
-
-'''
-#creation of a file
-result = requests.post('http://localhost:8000/file/', data={'file_name': 'test.txt'})
-
-# Delete
-requests.delete(
-    'http://localhost:8000/file/',
-    params={'file_name': 'test.txt'}, headers={'Authorization': 'JWT %s' % var }
-)
-
-# retrieve key
-result = requests.get(
-    'http://localhost:8000/file/',
-    params={'file_name': 'test.txt'},
-    headers={'Authorization': 'JWT %s' % var }
-)
-
-# List of files
-requests.get('http://localhost:8000/file/list/', headers={'Authorization': 'JWT %s' % var})
-
-# Get auth token
-# requests.post(
-    'http://localhost:8000/api-token-auth/',
-    json={'username': 'remid', 'password': 'password'}
-)
-
-# Refresh auth token
-requests.post('http:/localhost:8000/api-token-refresh/', json={'token': var})
-'''
