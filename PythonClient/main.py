@@ -62,7 +62,7 @@ class FileInterface(tk.Frame):
                 '%s/file/' % SETTINGS['SERVER_URL'],
                 data={'file_name': file_name},
                 headers={'Authorization': 'JWT %s' % self.parent.jwt_token},
-                verify=False
+                verify=SETTINGS['SSL_CERTIFICATE_VERIFICATION']
             )
         except requests.exceptions.RequestException:
             self.error_message.config(text='No internet connection!')
@@ -91,7 +91,7 @@ class FileInterface(tk.Frame):
                         '%s/file/' % SETTINGS['SERVER_URL'],
                         params={'file_name': self.file_list.get(index)},
                         headers={'Authorization': 'JWT %s' % self.parent.jwt_token},
-                        verify=False
+                        verify=SETTINGS['SSL_CERTIFICATE_VERIFICATION']
                     )
                 except requests.exceptions.RequestException:
                     pass
@@ -112,7 +112,7 @@ class FileInterface(tk.Frame):
                         '%s/file/' % SETTINGS['SERVER_URL'],
                         params={'file_name': file_name},
                         headers={'Authorization': 'JWT %s' % self.parent.jwt_token},
-                        verify=False
+                        verify=SETTINGS['SSL_CERTIFICATE_VERIFICATION']
                     )
                 except requests.exceptions.RequestException:
                     pass
@@ -158,11 +158,9 @@ class LoginInterface(tk.Frame):
             result = requests.post(
                 '%sapi-token-auth/' % SETTINGS['SERVER_URL'],
                 json={'username': self.email.get(), 'password': self.password.get()},
-                verify=False
+                verify=SETTINGS['SSL_CERTIFICATE_VERIFICATION']
             )
-        except requests.exceptions.RequestException as error:
-            import ipdb
-            ipdb.set_trace()
+        except requests.exceptions.RequestException:
             self.error_message.config(text='No internet connection!')
             return
 
