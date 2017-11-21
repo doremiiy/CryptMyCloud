@@ -25,7 +25,7 @@ SECRET_KEY = '%vk02@8hh5=9b=v=6_bva3=h*vut9ljq)!x8x&ceqobi7y2+p1'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -138,6 +138,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# secure proxy SSL header and secure cookies
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# session expire at browser close
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# wsgi scheme
+os.environ['wsgi.url_scheme'] = 'https'
+
 
 # Load local settings
 try:
