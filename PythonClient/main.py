@@ -5,6 +5,7 @@ from tkinter.filedialog import askopenfilename
 
 import requests
 
+import cloud_manager
 import file_manager
 
 
@@ -18,9 +19,17 @@ class FileInterface(tk.Frame):
 
         self.file_list = tk.Listbox(self)
         self.file_list.grid(rowspan=3, column=0)
-        tk.Button(self, text='Upload new file', command=self.upload_file).grid(row=0, column=1)
-        tk.Button(self, text='Delete', command=self.delete_file).grid(row=1, column=1)
-        tk.Button(self, text='Download & Decrypt', command=self.upload_file).grid(row=2, column=1)
+        tk.Button(
+            self,
+            text='Cipher & Upload new file',
+            command=self.cipher_upload_file
+        ).grid(row=0, column=1)
+        tk.Button(self, text='Delete file', command=self.delete_file).grid(row=1, column=1)
+        tk.Button(
+            self,
+            text='Download & Decipher',
+            command=self.download_decipher_file
+        ).grid(row=2, column=1)
         self.error_message = tk.Label(self, text='', fg='red')
         self.error_message.grid(row=2, column=0)
         self.refresh_list()
@@ -43,7 +52,7 @@ class FileInterface(tk.Frame):
         else:
             self.error_message.config(text='Http error : %d' % result.status_code)
 
-    def upload_file(self):
+    def cipher_upload_file(self):
         file_obj = askopenfilename()
         if not file_obj:
             return
@@ -67,8 +76,8 @@ class FileInterface(tk.Frame):
                 'temp/%s' % file_name,
                 bytes.fromhex(result.json()['key'])
             )
-            # TODO: Upload TempFile to google drive
-            # os.system('rm -rf temp')
+            cloud_manager.upload('temp/%s' % file_name)
+            os.system('rm -rf temp')
             self.refresh_list()
         else:
             self.error_message.config(text='Http error : %d' % result.status_code)
@@ -86,10 +95,38 @@ class FileInterface(tk.Frame):
                     )
                 except requests.exceptions.RequestException:
                     pass
+                cloud_manager.delete(self.file_list.get(index))
                 self.file_list.delete(index)
         except IndexError:
             pass
         self.refresh_list()
+
+    def download_decipher_file(self):
+        try:
+            indexes = self.file_list.curselection()
+            os.makedirs('temp')
+            for index in indexes:
+                file_name = self.file_list.get(index)
+                try:
+                    result = requests.get(
+                        '%s/file/' % SETTINGS['SERVER_URL'],
+                        params={'file_name': file_name},
+                        headers={'Authorization': 'JWT %s' % self.parent.jwt_token},
+                        verify=False
+                    )
+                except requests.exceptions.RequestException:
+                    pass
+                if result.status_code == requests.codes.ok:
+                    cloud_manager.download(file_name)
+                    file_manager.decrypt(
+                        'temp/%s' % file_name,
+                        'Output/%s' % file_name,
+                        bytes.fromhex(result.json()['key'])
+                    )
+            os.system('rm -rf temp')
+        except IndexError:
+            pass
+
 
 class LoginInterface(tk.Frame):
 
@@ -112,9 +149,6 @@ class LoginInterface(tk.Frame):
         tk.Checkbutton(self, text='Stay logged', variable=self.stay_logged).grid(row=2, column=0)
         tk.Button(self, text='Log In', command=self.login).grid(row=2, column=1)
         self.error_message.grid(row=3, columnspan=2)
-
-
-
 
     def login(self):
         if not self.email.get() or not self.password.get():
@@ -145,6 +179,7 @@ class LoginInterface(tk.Frame):
 
 
 class MainApplication(tk.Frame):
+
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
