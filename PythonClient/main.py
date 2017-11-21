@@ -28,8 +28,9 @@ class FileInterface(tk.Frame):
     def refresh_list(self):
         try:
             result = requests.get(
-                'http://%s:%s/file/list/' % (SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
-                headers={'Authorization': 'JWT % s' % self.parent.jwt_token}
+                '%s/file/list/' % SETTINGS['SERVER_URL'],
+                headers={'Authorization': 'JWT % s' % self.parent.jwt_token},
+                verify=False
             )
         except requests.exceptions.RequestException:
             self.error_message.config(text='No internet connection!')
@@ -49,9 +50,10 @@ class FileInterface(tk.Frame):
         file_name = os.path.basename(file_obj)
         try:
             result = requests.post(
-                'http://%s:%s/file/' % (SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
+                '%s/file/' % SETTINGS['SERVER_URL'],
                 data={'file_name': file_name},
-                headers={'Authorization': 'JWT %s' % self.parent.jwt_token}
+                headers={'Authorization': 'JWT %s' % self.parent.jwt_token},
+                verify=False
             )
         except requests.exceptions.RequestException:
             self.error_message.config(text='No internet connection!')
@@ -77,9 +79,10 @@ class FileInterface(tk.Frame):
             for index in indexes:
                 try:
                     requests.delete(
-                        'http://%s:%s/file/' % (SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
+                        '%s/file/' % SETTINGS['SERVER_URL'],
                         params={'file_name': self.file_list.get(index)},
-                        headers={'Authorization': 'JWT %s' % self.parent.jwt_token}
+                        headers={'Authorization': 'JWT %s' % self.parent.jwt_token},
+                        verify=False
                     )
                 except requests.exceptions.RequestException:
                     pass
@@ -119,10 +122,13 @@ class LoginInterface(tk.Frame):
             return 
         try:
             result = requests.post(
-                'http://%s:%s/api-token-auth/' % (SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
-                json={'username': self.email.get(), 'password': self.password.get()}
+                '%sapi-token-auth/' % SETTINGS['SERVER_URL'],
+                json={'username': self.email.get(), 'password': self.password.get()},
+                verify=False
             )
-        except requests.exceptions.RequestException:
+        except requests.exceptions.RequestException as error:
+            import ipdb
+            ipdb.set_trace()
             self.error_message.config(text='No internet connection!')
             return
 
@@ -150,9 +156,9 @@ class MainApplication(tk.Frame):
         if SETTINGS.get('JWT_TOKEN'):
             try:
                 result = requests.post(
-                    'http://%s:%s/api-token-refresh/' % (
-                    SETTINGS['SERVER_IP'], SETTINGS['SERVER_PORT']),
-                    json={'token': SETTINGS['JWT_TOKEN']}
+                    '%s/api-token-refresh/'% SETTINGS['SERVER_URL'],
+                    json={'token': SETTINGS['JWT_TOKEN']},
+                    verify=False
                 )
             except requests.exceptions.RequestException:
                 result = None
