@@ -1,9 +1,11 @@
 import json
 import os
+import tempfile
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import cloud_manager
 import file_manager
@@ -70,14 +72,13 @@ class FileInterface(tk.Frame):
 
         if result.status_code == requests.codes.created:
             self.error_message.config(text='')
-            os.makedirs('temp')
-            file_manager.encrypt(
-                file_obj,
-                'temp/%s' % file_name,
-                bytes.fromhex(result.json()['key'])
-            )
-            cloud_manager.upload('temp/%s' % file_name)
-            os.system('rm -rf temp')
+            with tempfile.TemporaryDirectory() as temp_directory:
+                file_manager.encrypt(
+                    file_obj,
+                    '%s/%s' % (temp_directory, file_name),
+                    bytes.fromhex(result.json()['key'])
+                )
+                cloud_manager.upload('%s/%s' % (temp_directory, file_name))
             self.refresh_list()
         else:
             self.error_message.config(text='Http error : %d' % result.status_code)
@@ -104,7 +105,6 @@ class FileInterface(tk.Frame):
     def download_decipher_file(self):
         try:
             indexes = self.file_list.curselection()
-            os.makedirs('temp')
             for index in indexes:
                 file_name = self.file_list.get(index)
                 try:
@@ -117,13 +117,13 @@ class FileInterface(tk.Frame):
                 except requests.exceptions.RequestException:
                     pass
                 if result.status_code == requests.codes.ok:
-                    cloud_manager.download(file_name)
-                    file_manager.decrypt(
-                        'temp/%s' % file_name,
-                        'Output/%s' % file_name,
-                        bytes.fromhex(result.json()['key'])
-                    )
-            os.system('rm -rf temp')
+                    with tempfile.TemporaryDirectory() as temp_directory:
+                        cloud_manager.download(file_name, temp_directory)
+                        file_manager.decrypt(
+                            '%s/%s' % (temp_directory, file_name),
+                            'Output/%s' % file_name,
+                            bytes.fromhex(result.json()['key'])
+                        )
         except IndexError:
             pass
 
@@ -208,6 +208,7 @@ class MainApplication(tk.Frame):
 
 
 if __name__ == "__main__":
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     with open('settings.json', 'r') as settings_file:
         SETTINGS = json.load(settings_file)
     root = tk.Tk()
