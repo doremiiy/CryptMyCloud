@@ -171,17 +171,21 @@ class LoginInterface(tk.Frame):
                 with open('settings.json', 'w') as settings_file:
                     json.dump(SETTINGS, settings_file)
             self.grid_forget()
-            FileInterface(self.parent).grid()
+            FileInterface(self.parent).grid(row=1, column=1)
         else:
             self.error_message.config(text='Http error : %d' % result.status_code)
 
 
-class MainApplication(tk.Frame):
+class MainApplication(tk.Tk):
 
-    def __init__(self, parent, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
-        self.parent.title('CryptMyCloud - PythonClient')
+    def __init__(self):
+        super(MainApplication, self).__init__()
+        self.title('CryptMyCloud - PythonClient')
+        self.minsize(width=SETTINGS['WIDTH'], height=SETTINGS['HEIGHT'])
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(2, weight=1)
 
         need_login = True
         self.jwt_token = None
@@ -194,31 +198,22 @@ class MainApplication(tk.Frame):
                     verify=False
                 )
             except requests.exceptions.RequestException:
-                result = None
-            if result and result.status_code == 200:
-                self.jwt_token = result.json().get('token')
-                SETTINGS['JWT_TOKEN'] = self.jwt_token
-                with open('settings.json', 'w') as settings_file:
-                    json.dump(SETTINGS, settings_file)
-                need_login = False
-                FileInterface(self.parent).grid()
+                pass
+            else:
+                if result.status_code == requests.codes.ok:
+                    self.jwt_token = result.json().get('token')
+                    SETTINGS['JWT_TOKEN'] = self.jwt_token
+                    with open('settings.json', 'w') as settings_file:
+                        json.dump(SETTINGS, settings_file)
+                    need_login = False
+                    FileInterface(self).grid(row=1, column=1)
 
         if need_login:
-            LoginInterface(self.parent).grid()
+            LoginInterface(self).grid(row=1, column=1)
 
 
 if __name__ == "__main__":
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     with open('settings.json', 'r') as settings_file:
         SETTINGS = json.load(settings_file)
-    root = tk.Tk()
-    root.minsize(width=SETTINGS['WIDTH'], height=SETTINGS['HEIGHT'])
-
-    MainApplication(root).grid(row=1, column=1)
-
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_rowconfigure(2, weight=1)
-    root.grid_columnconfigure(0, weight=1)
-    root.grid_columnconfigure(2, weight=1)
-
-    root.mainloop()
+    MainApplication().mainloop()
