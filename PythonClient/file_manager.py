@@ -9,9 +9,9 @@ def encrypt(in_file, out_file, key):
         cipher = AES.new(key, AES.MODE_CBC, iv)
         finished = False
         while not finished:
-            chunk = in_file.read(1024 *  AES.block_size)
+            chunk = in_file.read(1024 * AES.block_size)
             if len(chunk) == 0 or len(chunk) % AES.block_size != 0:
-                padding_length = ( AES.block_size - len(chunk) %  AES.block_size) or  AES.block_size
+                padding_length = (AES.block_size - len(chunk) % AES.block_size) or AES.block_size
                 chunk += padding_length * str(padding_length).encode('ascii')
                 finished = True
             out_file.write(cipher.encrypt(chunk))
@@ -30,11 +30,3 @@ def decrypt(in_file, out_file, key):
                 chunk = chunk[:-padding_length]
                 finished = True
             out_file.write(chunk)
-
-'''
-if __name__ == '__main__':
-    import os
-    key = os.urandom(32)
-    encrypt('test.pdf', 'test2.pdf', key)
-    decrypt('test2.pdf', 'test3.pdf', key)
-'''

@@ -5,11 +5,9 @@ import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 import cloud_manager
 import file_manager
-
 
 SETTINGS = {}
 
@@ -19,7 +17,7 @@ class FileInterface(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 
-        self.file_list = tk.Listbox(self)
+        self.file_list = tk.Listbox(self, selectmode=tk.EXTENDED, width=50)
         self.file_list.grid(rowspan=3, column=0)
         tk.Button(
             self,
@@ -33,7 +31,7 @@ class FileInterface(tk.Frame):
             command=self.download_decipher_file
         ).grid(row=2, column=1)
         self.error_message = tk.Label(self, text='', fg='red')
-        self.error_message.grid(row=2, column=0)
+        self.error_message.grid(row=3, column=0)
         self.refresh_list()
 
     def refresh_list(self):
@@ -47,7 +45,7 @@ class FileInterface(tk.Frame):
             self.error_message.config(text='No internet connection!')
             return
         if result.status_code == requests.codes.ok:
-            self.file_list.delete(0, self.file_list.size()-1)
+            self.file_list.delete(0, self.file_list.size() - 1)
             self.error_message.config(text='')
             for file_obj in result.json():
                 self.file_list.insert(tk.END, file_obj['file_name'])
@@ -129,7 +127,6 @@ class FileInterface(tk.Frame):
 
 
 class LoginInterface(tk.Frame):
-
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
@@ -153,7 +150,7 @@ class LoginInterface(tk.Frame):
     def login(self):
         if not self.email.get() or not self.password.get():
             self.error_message.config(text='Empty field!')
-            return 
+            return
         try:
             result = requests.post(
                 '%sapi-token-auth/' % SETTINGS['SERVER_URL'],
@@ -168,8 +165,8 @@ class LoginInterface(tk.Frame):
             self.parent.jwt_token = result.json().get('token')
             if self.stay_logged.get():
                 SETTINGS['JWT_TOKEN'] = self.parent.jwt_token
-                with open('settings.json', 'w') as settings_file:
-                    json.dump(SETTINGS, settings_file)
+                with open('settings.json', 'w') as settings:
+                    json.dump(SETTINGS, settings)
             self.grid_forget()
             FileInterface(self.parent).grid(row=1, column=1)
         else:
@@ -177,7 +174,6 @@ class LoginInterface(tk.Frame):
 
 
 class MainApplication(tk.Tk):
-
     def __init__(self):
         super(MainApplication, self).__init__()
         self.title('CryptMyCloud - PythonClient')
@@ -193,7 +189,7 @@ class MainApplication(tk.Tk):
         if SETTINGS.get('JWT_TOKEN'):
             try:
                 result = requests.post(
-                    '%s/api-token-refresh/'% SETTINGS['SERVER_URL'],
+                    '%s/api-token-refresh/' % SETTINGS['SERVER_URL'],
                     json={'token': SETTINGS['JWT_TOKEN']},
                     verify=False
                 )
@@ -203,8 +199,8 @@ class MainApplication(tk.Tk):
                 if result.status_code == requests.codes.ok:
                     self.jwt_token = result.json().get('token')
                     SETTINGS['JWT_TOKEN'] = self.jwt_token
-                    with open('settings.json', 'w') as settings_file:
-                        json.dump(SETTINGS, settings_file)
+                    with open('settings.json', 'w') as settings:
+                        json.dump(SETTINGS, settings)
                     need_login = False
                     FileInterface(self).grid(row=1, column=1)
 
@@ -213,7 +209,9 @@ class MainApplication(tk.Tk):
 
 
 if __name__ == "__main__":
-    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+    requests.packages.urllib3.disable_warnings(
+        requests.packages.urllib3.exceptions.InsecureRequestWarning
+    )
     with open('settings.json', 'r') as settings_file:
         SETTINGS = json.load(settings_file)
     MainApplication().mainloop()
