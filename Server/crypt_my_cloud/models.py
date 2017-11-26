@@ -36,7 +36,7 @@ class File(AutoReportModel):
     file_name = models.CharField(unique=True, max_length=50)
 
     key = models.ForeignKey(Key, null=True)
-    # owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, related_name='owned_files', on_delete=models.CASCADE)
 
     def __repr__(self):
         return self.file_name

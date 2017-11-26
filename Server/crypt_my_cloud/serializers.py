@@ -1,25 +1,17 @@
 from rest_framework import serializers
 
-from crypt_my_cloud.models import File, Key
-
-
-class KeySerializer(serializers.ModelSerializer):
-    # TODO: remove this serializer if it's still useless
-    class Meta:
-        model = Key
-        fields = ('key', )
-        read_only_fields = ('key',)
+from crypt_my_cloud.models import File
 
 
 class FileSerializer(serializers.ModelSerializer):
 
-    #key=KeySerializer(read_only=True)
     key = serializers.SlugRelatedField(slug_field='key', read_only=True)
+    owner = serializers.ReadOnlyField(source='owner.username')
 
     class Meta:
         model = File
-        fields = ('file_name', 'key')
-        read_only_fields = ('key',)
+        fields = ('file_name', 'key', 'owner',)
+        read_only_fields = ('key', 'owner',)
 
 
 class FileLimitedSerializer(serializers.ModelSerializer):
