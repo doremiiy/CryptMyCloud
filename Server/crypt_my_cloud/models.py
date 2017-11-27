@@ -37,6 +37,7 @@ class File(AutoReportModel):
 
     key = models.ForeignKey(Key, null=True)
     owner = models.ForeignKey(User, related_name='owned_files', on_delete=models.CASCADE)
+    allowed_user = models.ManyToManyField(User, related_name='shared_files', blank=True)
 
     def __repr__(self):
         return self.file_name

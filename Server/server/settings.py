@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['*']
 
 SERVER_APP = [
     'crypt_my_cloud',
+    'custom_auth'
 ]
 
 INSTALLED_APPS = [

@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'^api-token-auth/', obtain_jwt_token),
     url(r'^api-token-refresh/', refresh_jwt_token),
     url(r'^file/', include('crypt_my_cloud.urls')),
+    url(r'^user/', include('custom_auth.urls')),
 ]

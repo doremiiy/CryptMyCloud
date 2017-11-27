@@ -1,10 +1,12 @@
 import codecs
 import os
 
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from rest_framework.generics import (
     CreateAPIView,
     ListAPIView,
-    RetrieveDestroyAPIView,
+    RetrieveUpdateDestroyAPIView,
     get_object_or_404
 )
 from rest_framework.permissions import IsAuthenticated
@@ -13,14 +15,15 @@ from crypt_my_cloud.models import Key, File
 from crypt_my_cloud.serializers import FileSerializer, FileLimitedSerializer
 
 
-class FileView(CreateAPIView, RetrieveDestroyAPIView):
-
+class FileView(CreateAPIView, RetrieveUpdateDestroyAPIView):
     serializer_class = FileSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         user = self.request.user
-        return File.objects.select_related('key').filter(owner=user)
+        return File.objects.select_related('key').filter(
+            Q(owner=user) | Q(allowed_user__in=[user])
+        )
 
     def get_object(self):
         obj = get_object_or_404(
@@ -33,15 +36,27 @@ class FileView(CreateAPIView, RetrieveDestroyAPIView):
     def perform_create(self, serializer):
         serializer.save(
             key=Key.objects.create(key=codecs.encode(os.urandom(32), 'hex_codec').decode('ascii')),
-            owner = self.request.user
+            owner=self.request.user
         )
 
-class FilesView(ListAPIView):
+    def perform_destroy(self, instance):
+        if self.request.user != instance.owner:
+            raise PermissionDenied
+        super(FileView, self).perform_destroy(instance)
 
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.owner:
+            raise PermissionDenied
+        super(FileView, self).perform_update(serializer)
+
+
+
+class FilesView(ListAPIView):
     serializer_class = FileLimitedSerializer
     permission_classes = (IsAuthenticated,)
-    #queryset = File.objects.all().order_by('file_name')
 
     def get_queryset(self):
         user = self.request.user
-        return File.objects.filter(owner=user).order_by('file_name')
+        return File.objects.select_related('key').filter(
+            Q(owner=user) | Q(allowed_user__in=[user])
+        )
