@@ -12,7 +12,7 @@ def encrypt(in_file, out_file, key):
             chunk = in_file.read(1024 * AES.block_size)
             if len(chunk) == 0 or len(chunk) % AES.block_size != 0:
                 padding_length = (AES.block_size - len(chunk) % AES.block_size) or AES.block_size
-                chunk += padding_length * str(padding_length).encode('ascii')
+                chunk += padding_length * hex(padding_length).strip('0x').encode('ascii')
                 finished = True
             out_file.write(cipher.encrypt(chunk))
 
@@ -26,7 +26,7 @@ def decrypt(in_file, out_file, key):
         while not finished:
             chunk, next_chunk = next_chunk, cipher.decrypt(in_file.read(1024 * AES.block_size))
             if len(next_chunk) == 0:
-                padding_length = int(chr(chunk[-1]))
+                padding_length = int(chr(chunk[-1]), 16)
                 chunk = chunk[:-padding_length]
                 finished = True
             out_file.write(chunk)
