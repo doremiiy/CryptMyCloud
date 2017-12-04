@@ -284,8 +284,7 @@ class MainApplication(tk.Tk):
                         json.dump(SETTINGS, settings)
                     need_login = False
                     FileInterface(self).grid(row=1, column=1)
-                else:
-                    self.print_error_message(result)
+
 
         if need_login:
             LoginInterface(self).grid(row=1, column=1)
