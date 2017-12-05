@@ -82,19 +82,22 @@ class FileInterface(tk.Frame):
         self.file_list.heading('owner', text='Owner', anchor='w')
         self.file_list.column('#0', anchor='center', width=500)
         self.file_list.column('owner', anchor='center', width=100)
-        self.file_list.grid(rowspan=3, column=0)
-        tk.Button(
-            self,
-            text='Cipher & Upload new file',
-            command=self.cipher_upload_file
-        ).grid(row=0, column=1)
-        tk.Button(self, text='Share File', command=self.share_file).grid(row=1, column=1)
-        tk.Button(self, text='Delete file', command=self.delete_file).grid(row=2, column=1)
-        tk.Button(
-            self,
-            text='Download & Decipher',
-            command=self.download_decipher_file
-        ).grid(row=3, column=1)
+        self.file_list.grid(rowspan=4, column=0)
+
+        tk.Button(self, text='Refesh', command=self.refresh_list).grid(
+            row=0, column=1, columnspan=2, sticky=tk.N + tk.S + tk.E + tk.W
+        )
+        tk.Button(self, text='Cipher & Upload new file', command=self.cipher_upload_file).grid(
+            row=1, column=1, columnspan=2, sticky=tk.N + tk.S + tk.E + tk.W
+        )
+        tk.Button(self, text='Share File', command=self.share_file).grid(
+            row=2, column=1, sticky=tk.N + tk.S + tk.E + tk.W)
+        tk.Button(self, text='Delete file', command=self.delete_file).grid(
+            row=2, column=2, sticky=tk.N + tk.S + tk.E + tk.W)
+        tk.Button(self, text='Download & Decipher', command=self.download_decipher_file).grid(
+            row=3, column=1, columnspan=2, sticky=tk.N + tk.S + tk.E + tk.W
+        )
+
         self.refresh_list()
 
     def refresh_list(self):
@@ -284,8 +287,7 @@ class MainApplication(tk.Tk):
                         json.dump(SETTINGS, settings)
                     need_login = False
                     FileInterface(self).grid(row=1, column=1)
-                else:
-                    self.print_error_message(result)
+
 
         if need_login:
             LoginInterface(self).grid(row=1, column=1)

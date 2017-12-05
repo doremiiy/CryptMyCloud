@@ -1,2 +1,12 @@
+asn1crypto==0.23.0
+bcrypt==3.1.4
+cffi==1.11.2
+cryptography==2.1.4
+idna==2.6
+paramiko==2.4.0
+pyasn1==0.4.2
+pycparser==2.18
 pycrypto==2.6.1
+PyNaCl==1.2.1
 requests==2.18.4
+six==1.11.0

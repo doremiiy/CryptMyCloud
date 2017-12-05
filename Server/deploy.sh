@@ -1,9 +1,9 @@
 #!/bin/bash
-# Warning: script sould be launched as root user
 
 # software setup
-apt-get update
-apt-get install python3 python3-pip apache2 libapache2-mod-wsgi-py3
+sudo apt-get update
+sudo apt-get -y upgrade
+sudo apt-get install -y python3 python3-pip apache2 libapache2-mod-wsgi-py3
 mkvirtualenv sr04_server --python=python3
 
 # Project repo setup
@@ -15,18 +15,18 @@ cd CryptMyCloud
 
 # Django setup
 pip install -r requirements.txt
-python CryptMyCloud/manage.py migrate
-python CryptMyCloud/manage.py collectstatic
+python manage.py migrate
+python manage.py collectstatic
 
 # Database setup
-chmod g+w CryptMyCloud/db.sqlite3
-chown :www-data CryptMyCloud/db.sqlite3
+sudo chmod g+w db.sqlite3
+sudo chown :www-data db.sqlite3
 
-chmod g+w CryptMyCloud
-chown :www-data CryptMyCloud
+sudo chmod g+w ../CryptMyCloud
+sudo chown :www-data ../CryptMyCloud
 
 # Apache setup
-cat > /etc/apache2/sites-available/000-default.conf <<EOL
+sudo cat > /etc/apache2/sites-available/000-default.conf <<EOL
 <VirtualHost *:80>
     ServerAdmin admin@example.com
 
@@ -42,7 +42,8 @@ cat > /etc/apache2/sites-available/000-default.conf <<EOL
 </VirtualHost>
 EOL
 
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/apache2/certs/cryptmycloud.key -out /etc/apache2/certs/cryptmycloud.crt
+sudo mkdir /etc/apache2/certs
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/apache2/certs/cryptmycloud.key -out /etc/apache2/certs/cryptmycloud.crt
 
 cat > /etc/apache2/sites-available/default-ssl.conf <<EOL
 <VirtualHost *:443>
@@ -81,6 +82,6 @@ a2ensite default-ssl
 a2enmod rewrite  # redirection
 a2enmod ssl  # ssl
 
-service apache2 restart  # restart apache
+sudo service apache2 restart  # restart apache
 
 # source /etc/apache2/envvars
