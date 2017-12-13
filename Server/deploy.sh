@@ -37,7 +37,7 @@ sudo cat > /etc/apache2/sites-available/000-default.conf <<EOL
     # from http to https automatically.
     RewriteEngine On
     RewriteCond %{HTTPS} off
-    RewriteRule (.*) https://%{SERVER_ADDR}/%{REQUEST_URI}
+    RewriteRule (.*) https://%{HTTP_HOST}/%{REQUEST_URI}
 
 </VirtualHost>
 EOL
@@ -82,6 +82,8 @@ a2ensite default-ssl
 a2enmod rewrite  # redirection
 a2enmod ssl  # ssl
 
-sudo service apache2 restart  # restart apache
+# restart apache
+sudo service apache2 restart
+sudo systemctl daemon-reload
 
 # source /etc/apache2/envvars
